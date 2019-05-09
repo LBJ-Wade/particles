@@ -23,9 +23,9 @@ def optimise(num_particles, dim, lam, num_iters=5000):
         V.backward()
         opt.step()
         if i % 100 == 0:
-            print('Iter [%i] V [%5.4f]' % (i, V.detach().numpy()))
+            print('Iter [%i] V [%5.4f]' % (i, V.detach().cpu().numpy()))
 
-    return x.detach().numpy()
+    return x.detach().cpu().numpy()
 
 
 if __name__ == '__main__':
