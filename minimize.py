@@ -13,7 +13,7 @@ def optimise(num_particles, dim, lam, num_iters=5000):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    x = torch.randn(num_particles, dim, requires_grad=True).to(device)
+    x = torch.randn(num_particles, dim, requires_grad=True, device=device)
 
     opt = torch.optim.Adam([x], lr=0.1)
 
