@@ -15,10 +15,13 @@ def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1):
 
     opt = torch.optim.Adam([x], lr=lr)
 
+    idx = torch.triu(torch.ones(num_particles, num_particles), diagonal=1) == 1
+
     for i in range(num_iters):
         opt.zero_grad()
-        #V = torch.sum(1 / torch.nn.functional.pdist(x)) + lam / 6 * torch.sum(torch.norm(x, dim=1))
-        V = torch.sum(torch.norm(x[:, None] - x, dim=2, p=2)) / 2 + lam / 6 * torch.sum(torch.norm(x, dim=1))
+        #d = torch.nn.functional.pdist(x)
+        d = torch.norm(x[:, None] - x, dim=2, p=2)[idx]
+        V = torch.sum(1 / d) + lam / 6 * torch.sum(torch.norm(x, dim=1))
         V.backward()
         opt.step()
         if i % 100 == 0:
