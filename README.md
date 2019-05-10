@@ -14,5 +14,5 @@ Runs can be analysed by
 python analyse.py --log_dir logs/test
 ```
 
-![positions](https://github.com/adammoss/positions/blob/master/positions.png)
-![hist](https://github.com/adammoss/positions/blob/master/hist.png)
+![positions](https://github.com/adammoss/particles/blob/master/positions.png)
+![hist](https://github.com/adammoss/particles/blob/master/hist.png)
