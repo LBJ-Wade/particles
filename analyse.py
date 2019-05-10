@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+from scipy.special import gamma
 
 
 if __name__ == '__main__':
@@ -21,7 +22,8 @@ if __name__ == '__main__':
     num, bins = np.histogram(r, density=False)
     center = (bins[:-1] + bins[1:]) / 2
     width = 0.7 * (bins[1] - bins[0])
-    volume = bins[1:]**dim- bins[:-1]**dim
+
+    volume = np.pi**(dim/2) / gamma(dim/2+1) * (bins[1:]**dim- bins[:-1]**dim)
     plt.bar(center, num / volume, align='center', width=width)
     plt.savefig(os.path.join(args.log_dir, 'hist.png'))
 
