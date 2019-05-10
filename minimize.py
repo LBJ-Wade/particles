@@ -7,9 +7,20 @@ import torch
 import numpy as np
 
 
+def pairwise_distances(x):
+    #x_norm = x.pow(2).sum(dim=-1, keepdim=True)
+    #res = x.matmul(x.transpose(-2, -1)).mul_(-2).add_(x_norm.transpose(-2, -1)).add_(x_norm)
+    #res.diagonal(dim1=-2, dim2=-1).fill_(0)
+    #res = res.clamp_min_(0).pow(0.5)
+    #res = torch.cdist(x, x)
+    res = torch.norm(x[:, None] - x, dim=2, p=2)
+    return res
+
+
 def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=100):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.cuda.empty_cache()
 
     # Initialise random particle positions
     x = torch.randn(num_particles, dim, requires_grad=True, device=device)
@@ -27,8 +38,8 @@ def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output
         opt.zero_grad()
         # pdist is faster but gives a CUDA error for high num_particles
         #dist = torch.nn.functional.pdist(x)
-        dist = torch.norm(x[:, None] - x, dim=2, p=2)[idx]
-        V = torch.sum(1 / dist) + lam / 6 * torch.sum(torch.norm(x, dim=1))
+        dist = pairwise_distances(x)[idx]
+        V = torch.sum(1 / dist) + lam / 6 * torch.sum(torch.norm(x, dim=1)**2)
         V.backward()
         opt.step()
         if i % output_iter == 0:

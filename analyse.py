@@ -23,7 +23,7 @@ if __name__ == '__main__':
     width = 0.7 * (bins[1] - bins[0])
     volume = bins[1:]**dim- bins[:-1]**dim
     plt.bar(center, num / volume, align='center', width=width)
-    plt.show()
+    plt.savefig(os.path.join(args.log_dir, 'hist.png'))
 
     fig = plt.figure()
     if dim == 2:
@@ -31,4 +31,4 @@ if __name__ == '__main__':
     elif dim == 3:
         ax = Axes3D(fig)
         ax.scatter(x[:, 0], x[:, 1], x[:, 2], marker='o', s=4)
-    plt.show()
+    plt.savefig(os.path.join(args.log_dir, 'positions.png'))
