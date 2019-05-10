@@ -17,9 +17,12 @@ def pairwise_distances(x):
     return res
 
 
-def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=100):
+def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=100, device=None):
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    batch_size = 10
+
+    device = torch.device('cuda' if device is None and torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
     torch.cuda.empty_cache()
 
     # Initialise random particle positions
@@ -29,6 +32,8 @@ def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output
 
     # Indices of upper triangular distance matrix
     idx = torch.triu(torch.ones(num_particles, num_particles), diagonal=1) == 1
+    #print(pairwise_distances(x))
+    idx = torch.triu_indices(num_particles, num_particles, offset=1)
 
     # Create log directory if it doesn't exist
     if log_dir and not os.path.exists(log_dir):
@@ -38,8 +43,11 @@ def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output
         opt.zero_grad()
         # pdist is faster but gives a CUDA error for high num_particles
         #dist = torch.nn.functional.pdist(x)
-        dist = pairwise_distances(x)[idx]
-        V = torch.sum(1 / dist) + lam / 6 * torch.sum(torch.norm(x, dim=1)**2)
+        #dist = pairwise_distances(x)[idx]
+        #V = torch.sum(1 / dist) + lam / 6 * torch.sum(torch.norm(x, dim=1)**2)
+        ridx = torch.randint(num_particles, (batch_size,))
+        dist = torch.norm(x[idx[0, ridx]] - x[idx[1, ridx]], dim=1, p=2)
+        V = torch.sum(1 / dist) + lam / 6 * torch.sum(torch.norm(x[ridx], dim=1)**2)
         V.backward()
         opt.step()
         if i % output_iter == 0:
