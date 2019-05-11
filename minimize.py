@@ -8,11 +8,6 @@ import numpy as np
 
 
 def pairwise_distances(x):
-    #x_norm = x.pow(2).sum(dim=-1, keepdim=True)
-    #res = x.matmul(x.transpose(-2, -1)).mul_(-2).add_(x_norm.transpose(-2, -1)).add_(x_norm)
-    #res.diagonal(dim1=-2, dim2=-1).fill_(0)
-    #res = res.clamp_min_(0).pow(0.5)
-    #res = torch.cdist(x, x)
     res = torch.norm(x[:, None] - x, dim=2, p=2)
     return res
 
