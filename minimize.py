@@ -15,7 +15,6 @@ def pairwise_distances(x):
 def optimise(num_particles, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=100):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    torch.cuda.empty_cache()
 
     # Initialise random particle positions
     x = torch.randn(num_particles, dim, requires_grad=True, device=device)
