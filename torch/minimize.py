@@ -16,6 +16,7 @@ def pairwise_forces(x, masses):
 def optimise(masses, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=100, opt='Adam'):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Device: %s' % device)
 
     masses = torch.from_numpy(masses).double().to(device)
     num_particles = masses.size()[0]
@@ -29,8 +30,12 @@ def optimise(masses, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=1
         opt = torch.optim.Adam([x], lr=lr)
     elif opt == 'RMSprop':
         opt = torch.optim.RMSprop([x], lr=lr)
+    elif opt == 'SGD':
+        opt = torch.optim.RMSprop([x], lr=lr)
     else:
         raise ValueError
+
+    scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.999)
 
     # Indices of upper triangular distance matrix
     idx = torch.triu(torch.ones(num_particles, num_particles), diagonal=1) == 1
@@ -42,15 +47,19 @@ def optimise(masses, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=1
     if log_dir:
         f = open(os.path.join(log_dir, 'log.txt'), 'w')
 
+    min_energy = np.inf
+
     for i in range(num_iters):
+        scheduler.step()
         opt.zero_grad()
         dist = pairwise_forces(x, masses)[idx]
         V = torch.sum(1 / dist) + lam / 6 * torch.sum(masses * torch.norm(x, dim=1)**2)
         V.backward()
         opt.step()
-        if i % output_iter == 0:
-            energy = V.detach().cpu().numpy()
-            print(i, energy)
+        energy = V.detach().cpu().numpy()
+        if energy < min_energy:
+            min_energy = energy
+            print(i, energy, scheduler.get_lr())
             if log_dir:
                 f.write('%i %5.4f \n' % (i, energy))
                 f.flush()
