@@ -178,7 +178,7 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
                 typename vec4<T>::Type *__restrict__ oldPos,
                 typename vec4<T>::Type *vel,
                 unsigned int deviceOffset, unsigned int deviceNumBodies,
-                float deltaTime, float damping, int numTiles)
+                float deltaTime, float damping, float lambda, int numTiles)
 {
     // Handle to thread block group
     cg::thread_block cta = cg::this_thread_block();
@@ -201,14 +201,15 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
     // (because they cancel out).  Thus here force == acceleration
     typename vec4<T>::Type velocity = vel[deviceOffset + index];
 
+    // AJM - make gravity repulsive
     velocity.x += -accel.x * deltaTime;
     velocity.y += -accel.y * deltaTime;
     velocity.z += -accel.z * deltaTime;
 
     // AJM
-    velocity.x += -1 * position.x * deltaTime;
-    velocity.y += -1 * position.y * deltaTime;
-    velocity.z += -1 * position.z * deltaTime;
+    velocity.x += -lambda / 3 * position.x * deltaTime;
+    velocity.y += -lambda / 3 * position.y * deltaTime;
+    velocity.z += -lambda / 3 * position.z * deltaTime;
 
     velocity.x *= damping;
     velocity.y *= damping;
@@ -224,12 +225,14 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
     vel[deviceOffset + index]    = velocity;
 }
 
+// AJM
 template <typename T>
 void integrateNbodySystem(DeviceData<T> *deviceData,
                           cudaGraphicsResource **pgres,
                           unsigned int currentRead,
                           float deltaTime,
                           float damping,
+                          float lambda,
                           unsigned int numBodies,
                           unsigned int numDevices,
                           int blockSize,
@@ -261,7 +264,7 @@ void integrateNbodySystem(DeviceData<T> *deviceData,
          (typename vec4<T>::Type *)deviceData[dev].dPos[currentRead],
          (typename vec4<T>::Type *)deviceData[dev].dVel,
          deviceData[dev].offset, deviceData[dev].numBodies,
-         deltaTime, damping, numTiles);
+         deltaTime, damping, lambda, numTiles);
 
         if (numDevices > 1)
         {
@@ -295,6 +298,7 @@ template void integrateNbodySystem<float>(DeviceData<float> *deviceData,
                                           unsigned int currentRead,
                                           float deltaTime,
                                           float damping,
+                                          float lambda,
                                           unsigned int numBodies,
                                           unsigned int numDevices,
                                           int blockSize,
@@ -305,6 +309,7 @@ template void integrateNbodySystem<double>(DeviceData<double> *deviceData,
                                            unsigned int currentRead,
                                            float deltaTime,
                                            float damping,
+                                           float lambda,
                                            unsigned int numBodies,
                                            unsigned int numDevices,
                                            int blockSize,

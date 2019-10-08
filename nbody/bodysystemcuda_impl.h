@@ -24,7 +24,7 @@
 template <typename T>
 void integrateNbodySystem(DeviceData<T> *deviceData,
                           cudaGraphicsResource **pgres, unsigned int currentRead,
-                          float deltaTime, float damping,
+                          float deltaTime, float damping, float lambda,
                           unsigned int numBodies, unsigned int numDevices,
                           int blockSize, bool bUsePBO);
 
@@ -54,6 +54,8 @@ BodySystemCUDA<T>::BodySystemCUDA(unsigned int numBodies,
     _initialize(numBodies);
     setSoftening(0.00125f);
     setDamping(0.995f);
+    setLambda(3.0f);
+
 }
 
 template<typename T>
@@ -289,12 +291,20 @@ void BodySystemCUDA<T>::setDamping(T damping)
 }
 
 template<typename T>
+void BodySystemCUDA<T>::setLambda(T lambda)
+{
+    m_lambda = lambda;
+}
+
+template<typename T>
 void BodySystemCUDA<T>::update(T deltaTime)
 {
     assert(m_bInitialized);
 
+    // AJM
     integrateNbodySystem<T>(m_deviceData, m_pGRes, m_currentRead,
                             (float)deltaTime, (float)m_damping,
+                            (float)m_lambda,
                             m_numBodies, m_numDevices,
                             m_blockSize, m_bUsePBO);
 

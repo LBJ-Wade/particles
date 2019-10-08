@@ -104,6 +104,7 @@ struct NBodyParams
     float m_velocityScale;
     float m_softening;
     float m_damping;
+    float m_lambda;
     float m_pointSize;
     float m_x, m_y, m_z;
 
@@ -115,20 +116,11 @@ struct NBodyParams
     }
 };
 
+// AJM
 NBodyParams demoParams[] =
     {
-        { 0.01f, 1.0f, 0.0f, 0.0001f, 0.99f, 1.0f, 0, -2, 0},
+        { 0.01f, 1.0f, 1.0f, 0.0001f, 0.99f, 3.0f, 1.0f, 0, -2, 0},
     };
-// AJM
-//{
-//    { 0.016f, 1.54f, 8.0f, 0.1f, 1.0f, 1.0f, 0, -2, -100},
-//    { 0.016f, 0.68f, 20.0f, 0.1f, 1.0f, 0.8f, 0, -2, -30},
-//    { 0.0006f, 0.16f, 1000.0f, 1.0f, 1.0f, 0.07f, 0, 0, -1.5f},
-//    { 0.0006f, 0.16f, 1000.0f, 1.0f, 1.0f, 0.07f, 0, 0, -1.5f},
-//    { 0.0019f, 0.32f, 276.0f, 1.0f, 1.0f, 0.07f, 0, 0, -5},
-//    { 0.0016f, 0.32f, 272.0f, 0.145f, 1.0f, 0.08f, 0, 0, -5},
-//    { 0.016000f, 6.040000f, 0.000000f, 1.000000f, 1.000000f, 0.760000f, 0, 0, -50},
-//};
 
 int numDemos = sizeof(demoParams) / sizeof(NBodyParams);
 bool cycleDemo = false;
@@ -193,6 +185,8 @@ class NBodyDemo
         {
             m_singleton->m_nbody->setSoftening(activeParams.m_softening);
             m_singleton->m_nbody->setDamping(activeParams.m_damping);
+            // AJM
+            m_singleton->m_nbody->setLambda(activeParams.m_lambda);
         }
 
         static void updateSimulation()
@@ -340,6 +334,8 @@ class NBodyDemo
 
             m_nbody->setSoftening(activeParams.m_softening);
             m_nbody->setDamping(activeParams.m_damping);
+            // AJM
+            m_nbody->setLambda(activeParams.m_lambda);
 
             if (useCpu)
             {
@@ -611,6 +607,11 @@ void initParameters()
     // Velocity Damping
     paramlist->AddParam(new Param<float>("Velocity Damping", activeParams.m_damping,
                                          0.5f, 1.0f, .0001f, &(activeParams.m_damping)));
+
+    // AJM - Lambda
+    paramlist->AddParam(new Param<float>("Lambda", activeParams.m_lambda,
+                                         0.0f, 10.0f, .1f, &(activeParams.m_lambda)));
+
     // Softening Factor
     paramlist->AddParam(new Param<float>("Softening Factor", activeParams.m_softening,
                                          0.001f, 1.0f, .0001f, &(activeParams.m_softening)));
@@ -623,7 +624,7 @@ void initParameters()
 
     // Velocity scale (only affects starting configuration)
     paramlist->AddParam(new Param<float>("Velocity Scale", activeParams.m_velocityScale,
-                                         0.0f, 1000.0f, 0.1f, &activeParams.m_velocityScale));
+                                         0.0f, 10.0f, 0.1f, &activeParams.m_velocityScale));
 }
 
 void selectDemo(int activeDemo)
@@ -1361,8 +1362,6 @@ main(int argc, char **argv)
     NBodyDemo<float>::init(numBodies, numDevsRequested, blockSize, !(benchmark || compareToCPU || useHostMem), useHostMem, useCpu);
     NBodyDemo<float>::reset(numBodies, NBODY_CONFIG_RANDOM);
 
-
-    printf("Hello");
 
     if (bSupportDouble)
     {

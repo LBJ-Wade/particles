@@ -71,6 +71,8 @@ class BodySystem
 
         virtual void setSoftening(T softening) = 0;
         virtual void setDamping(T damping) = 0;
+        // AJM
+        virtual void setLambda(T lambda) = 0;
 
         virtual T *getArray(BodyArray array) = 0;
         virtual void   setArray(BodyArray array, const T *data) = 0;
@@ -145,7 +147,6 @@ void randomizeBodies(NBodyConfig config, T *pos, T *vel, float *color, float clu
 
                 int p = 0, v = 0;
                 int i = 0;
-                printf("Random");
 
                 while (i < numBodies)
                 {
@@ -160,10 +161,9 @@ void randomizeBodies(NBodyConfig config, T *pos, T *vel, float *color, float clu
                         continue;
 
                     float3 velocity;
-                    // AJM
-                    velocity.x = 0; //rand() / (float) RAND_MAX * 2 - 1;
-                    velocity.y = 0; //rand() / (float) RAND_MAX * 2 - 1;
-                    velocity.z = 0; //rand() / (float) RAND_MAX * 2 - 1;
+                    velocity.x = rand() / (float) RAND_MAX * 2 - 1;
+                    velocity.y = rand() / (float) RAND_MAX * 2 - 1;
+                    velocity.z = rand() / (float) RAND_MAX * 2 - 1;
                     lenSqr = dot(velocity, velocity);
 
                     if (lenSqr > 1)
@@ -213,9 +213,9 @@ void randomizeBodies(NBodyConfig config, T *pos, T *vel, float *color, float clu
                     pos[p++] =  point.z * (inner + (outer - inner) * rand() / (float) RAND_MAX);
                     pos[p++] = 1.0f;
 
-                    x = 0.0f; // * (rand() / (float) RAND_MAX * 2 - 1);
-                    y = 0.0f; // * (rand() / (float) RAND_MAX * 2 - 1);
-                    z = 1.0f; // * (rand() / (float) RAND_MAX * 2 - 1);
+                    x = (rand() / (float) RAND_MAX * 2 - 1);
+                    y = (rand() / (float) RAND_MAX * 2 - 1);
+                    z = (rand() / (float) RAND_MAX * 2 - 1);
                     float3 axis = {x, y, z};
                     normalize(axis);
 

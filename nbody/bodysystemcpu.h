@@ -34,6 +34,11 @@ class BodySystemCPU : public BodySystem<T>
         {
             m_damping = damping;
         }
+        // AJM
+        virtual void setLambda(T lambda)
+        {
+            m_lambda = lambda;
+        }
 
         virtual T *getArray(BodyArray array);
         virtual void   setArray(BodyArray array, const T *data);
@@ -67,6 +72,8 @@ class BodySystemCPU : public BodySystem<T>
 
         T m_softeningSquared;
         T m_damping;
+        // AJM
+        T m_lambda;
 };
 
 #include "bodysystemcpu_impl.h"

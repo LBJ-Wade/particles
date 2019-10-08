@@ -30,7 +30,9 @@ BodySystemCPU<T>::BodySystemCPU(int numBodies)
       m_bInitialized(false),
       m_force(0),
       m_softeningSquared(.00125f),
-      m_damping(0.995f)
+      m_damping(0.995f),
+      // AJM
+      m_lambda(3.0f)
 {
     m_pos = 0;
     m_vel = 0;
@@ -257,14 +259,15 @@ void BodySystemCPU<T>::_integrateNBodySystem(T deltaTime)
         vel[1] = m_vel[index+1];
         vel[2] = m_vel[index+2];
 
-        force[0] = m_force[indexForce+0];
-        force[1] = m_force[indexForce+1];
-        force[2] = m_force[indexForce+2];
+        // AJM - make gravty repulsive
+        force[0] = -m_force[indexForce+0];
+        force[1] = -m_force[indexForce+1];
+        force[2] = -m_force[indexForce+2];
 
         // AJM - not sure about the mass terms m_pos[3] seems to be a mass not inverse mass in bodyBodyInteraction(
-        force[0] += 1 * m_pos[index+0] / invMass;
-        force[1] += 1 * m_pos[index+1] / invMass;
-        force[2] += 1 * m_pos[index+2] / invMass;
+        force[0] += -m_lambda / 3 * m_pos[index+0] / invMass;
+        force[1] += -m_lambda / 3 * m_pos[index+1] / invMass;
+        force[2] += -m_lambda / 3 * m_pos[index+2] / invMass;
 
         // acceleration = force / mass;
         // new velocity = old velocity + acceleration * deltaTime

@@ -42,6 +42,8 @@ class BodySystemCUDA : public BodySystem<T>
 
         virtual void setSoftening(T softening);
         virtual void setDamping(T damping);
+        // AJM
+        virtual void setLambda(T lambda);
 
         virtual T *getArray(BodyArray array);
         virtual void   setArray(BodyArray array, const T *data);
@@ -78,6 +80,8 @@ class BodySystemCUDA : public BodySystem<T>
         unsigned int m_SMVersion;
 
         T m_damping;
+        // AJM
+        T m_lambda;
 
         unsigned int m_pbo[2];
         cudaGraphicsResource *m_pGRes[2];
