@@ -35,7 +35,7 @@ def optimise(masses, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=1
     else:
         raise ValueError
 
-    scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.999)
+    scheduler = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=0.9999)
 
     # Indices of upper triangular distance matrix
     idx = torch.triu(torch.ones(num_particles, num_particles), diagonal=1) == 1
