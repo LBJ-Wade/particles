@@ -119,7 +119,7 @@ struct NBodyParams
 // AJM
 NBodyParams demoParams[] =
     {
-        { 0.01f, 1.0f, 1.0f, 0.0001f, 0.99f, 3.0f, 1.0f, 0, -2, 0},
+        { 0.01f, 1.0f, 1.0f, 0.00001f, 0.99f, 3.0f, 1.0f, 0, -2, 0},
     };
 
 int numDemos = sizeof(demoParams) / sizeof(NBodyParams);

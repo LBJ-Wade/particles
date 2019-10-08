@@ -71,7 +71,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dim', type=int, default=3, help="Dimensionality")
     parser.add_argument('--iters', type=int, default=20000, help="Number of iters")
-    parser.add_argument("--particles", type=int, default=100, help="Number of particles")
+    parser.add_argument("--particles", type=int, default=256, help="Number of particles")
     parser.add_argument('--lam', type=float, default=3, help="Lambda")
     parser.add_argument('--log_dir', type=str, default='logs/test')
     parser.add_argument('--masses', type=str)

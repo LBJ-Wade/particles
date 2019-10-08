@@ -36,6 +36,7 @@ BodySystemCPU<T>::BodySystemCPU(int numBodies)
 {
     m_pos = 0;
     m_vel = 0;
+    m_energy = 0;
 
     _initialize(numBodies);
 }
@@ -113,6 +114,7 @@ void BodySystemCPU<T>::update(T deltaTime)
     _integrateNBodySystem(deltaTime);
 
     //std::swap(m_currentRead, m_currentWrite);
+
 }
 
 template <typename T>
@@ -172,7 +174,7 @@ float sqrt_T<float>(float x)
 }
 
 template <typename T>
-void bodyBodyInteraction(T accel[3], T posMass0[4], T posMass1[4], T softeningSquared)
+void bodyBodyInteraction(T accel[3], T *energy, T posMass0[4], T posMass1[4], T softeningSquared)
 {
     T r[3];
 
@@ -183,11 +185,16 @@ void bodyBodyInteraction(T accel[3], T posMass0[4], T posMass1[4], T softeningSq
 
     // d^2 + e^2 [6 FLOPS]
     T distSqr = r[0] * r[0] + r[1] * r[1] + r[2] * r[2];
+    // AJM
+    bool valid = distSqr > 0;
+
     distSqr += softeningSquared;
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
     T invDist = (T)1.0 / (T)sqrt((double)distSqr);
     T invDistCube =  invDist * invDist * invDist;
+    // AJM
+    T invDistSquare = invDist * invDist;
 
     // s = m_j * invDistCube [1 FLOP]
     T s = posMass1[3] * invDistCube;
@@ -196,6 +203,10 @@ void bodyBodyInteraction(T accel[3], T posMass0[4], T posMass1[4], T softeningSq
     accel[0] += r[0] * s;
     accel[1] += r[1] * s;
     accel[2] += r[2] * s;
+
+    if (valid) {
+        *energy += posMass1[3] * invDistSquare;
+    }
 
 }
 
@@ -206,24 +217,27 @@ void BodySystemCPU<T>::_computeNBodyGravitation()
     #pragma omp parallel for
 #endif
 
+    m_energy = 0;
+
     for (int i = 0; i < m_numBodies; i++)
     {
         int indexForce = 3*i;
 
         T acc[3] = {0, 0, 0};
+        T energy = 0;
 
         // We unroll this loop 4X for a small performance boost.
         int j = 0;
 
         while (j < m_numBodies)
         {
-            bodyBodyInteraction<T>(acc, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
+            bodyBodyInteraction<T>(acc, &energy, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
             j++;
-            bodyBodyInteraction<T>(acc, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
+            bodyBodyInteraction<T>(acc, &energy, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
             j++;
-            bodyBodyInteraction<T>(acc, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
+            bodyBodyInteraction<T>(acc, &energy, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
             j++;
-            bodyBodyInteraction<T>(acc, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
+            bodyBodyInteraction<T>(acc, &energy, &m_pos[4*i], &m_pos[4*j], m_softeningSquared);
             j++;
         }
 
@@ -231,7 +245,14 @@ void BodySystemCPU<T>::_computeNBodyGravitation()
         m_force[indexForce+1] = acc[1];
         m_force[indexForce+2] = acc[2];
 
+        // AJM
+        m_energy += energy * m_pos[4*i + 3] + m_lambda / 6 * m_pos[4*i + 3] * (m_pos[4*i + 0] * m_pos[4*i + 0] +
+        m_pos[4*i + 1] * m_pos[4*i + 1] + m_pos[4*i + 2] * m_pos[4*i + 2]);
+
     }
+
+    printf("Total energy: %8.4f\n", m_energy);
+
 }
 
 template <typename T>
@@ -264,7 +285,7 @@ void BodySystemCPU<T>::_integrateNBodySystem(T deltaTime)
         force[1] = -m_force[indexForce+1];
         force[2] = -m_force[indexForce+2];
 
-        // AJM - not sure about the mass terms m_pos[3] seems to be a mass not inverse mass in bodyBodyInteraction(
+        // AJM - not sure about the mass terms m_pos[3] seems to be a mass not inverse mass in bodyBodyInteraction
         force[0] += -m_lambda / 3 * m_pos[index+0] / invMass;
         force[1] += -m_lambda / 3 * m_pos[index+1] / invMass;
         force[2] += -m_lambda / 3 * m_pos[index+2] / invMass;

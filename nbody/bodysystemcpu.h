@@ -74,6 +74,7 @@ class BodySystemCPU : public BodySystem<T>
         T m_damping;
         // AJM
         T m_lambda;
+        T m_energy;
 };
 
 #include "bodysystemcpu_impl.h"
