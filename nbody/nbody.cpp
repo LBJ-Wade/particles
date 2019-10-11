@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <assert.h>
 #include <math.h>
+#include <iostream>
+#include <fstream>
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
@@ -195,14 +197,23 @@ class NBodyDemo
 
             // AJM  - output energy
 
+            T *_pos = m_singleton->m_nbody->getArray(BODYSYSTEM_POSITION);
             T *_vel = m_singleton->m_nbody->getArray(BODYSYSTEM_VELOCITY);
             T energy = 0;
+
+            ofstream positions;
+            positions.open("positions.dat");
 
            for (int i = 0; i < numBodies; i++)
            {
                 int index = 4*i;
                 energy += _vel[index+3];
+                positions << _pos[index+0] << "\n";
+                positions << _pos[index+1] << "\n";
+                positions << _pos[index+2] << "\n";
            }
+           
+           positions.close();
 
            printf("Total energy: %8.4f\n", energy);
 
