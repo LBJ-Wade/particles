@@ -111,8 +111,8 @@ struct DeviceData
 
 
 template <typename T>
-__device__ typename vec3<T>::Type
-bodyBodyInteraction(typename vec3<T>::Type ai,
+__device__ typename vec4<T>::Type
+bodyBodyInteraction(typename vec4<T>::Type ai,
                     typename vec4<T>::Type bi,
                     typename vec4<T>::Type bj)
 {
@@ -125,11 +125,15 @@ bodyBodyInteraction(typename vec3<T>::Type ai,
 
     // distSqr = dot(r_ij, r_ij) + EPS^2  [6 FLOPS]
     T distSqr = r.x * r.x + r.y * r.y + r.z * r.z;
+    bool valid = distSqr > 0;
+
     distSqr += getSofteningSquared<T>();
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
     T invDist = rsqrt_T(distSqr);
-    T invDistCube =  invDist * invDist * invDist;
+    // AJM
+    T invDistSquare = invDist * invDist;
+    T invDistCube = invDistSquare * invDist;
 
     // s = m_j * invDistCube [1 FLOP]
     T s = bj.w * invDistCube;
@@ -139,18 +143,23 @@ bodyBodyInteraction(typename vec3<T>::Type ai,
     ai.y += r.y * s;
     ai.z += r.z * s;
 
+    // AJM - set w component to energy
+    if (valid) {
+        ai.w += bi.w * bj.w * invDistSquare;
+    }
+
     return ai;
 }
 
 template <typename T>
-__device__ typename vec3<T>::Type
+__device__ typename vec4<T>::Type
 computeBodyAccel(typename vec4<T>::Type bodyPos,
                  typename vec4<T>::Type *positions,
                  int numTiles, cg::thread_block cta)
 {
     typename vec4<T>::Type *sharedPos = SharedMemory<typename vec4<T>::Type>();
 
-    typename vec3<T>::Type acc = {0.0f, 0.0f, 0.0f};
+    typename vec4<T>::Type acc = {0.0f, 0.0f, 0.0f, 0.0f};
 
     for (int tile = 0; tile < numTiles; tile++)
     {
@@ -191,7 +200,7 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
 
     typename vec4<T>::Type position = oldPos[deviceOffset + index];
 
-    typename vec3<T>::Type accel = computeBodyAccel<T>(position,
+    typename vec4<T>::Type accel = computeBodyAccel<T>(position,
                                                        oldPos,
                                                        numTiles, cta);
 
@@ -215,6 +224,9 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
     velocity.y *= damping;
     velocity.z *= damping;
 
+    // AJM - store energy of particle in w component of velocity
+    velocity.w = accel.w + lambda / 6 * position.w * (position.x * position.x + position.y * position.y + position.z * position.z);
+
     // new position = old position + velocity * deltaTime
     position.x += velocity.x * deltaTime;
     position.y += velocity.y * deltaTime;
@@ -223,6 +235,7 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
     // store new position and velocity
     newPos[deviceOffset + index] = position;
     vel[deviceOffset + index]    = velocity;
+
 }
 
 // AJM

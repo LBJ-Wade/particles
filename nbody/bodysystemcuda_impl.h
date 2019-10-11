@@ -301,7 +301,6 @@ void BodySystemCUDA<T>::update(T deltaTime)
 {
     assert(m_bInitialized);
 
-    // AJM
     integrateNbodySystem<T>(m_deviceData, m_pGRes, m_currentRead,
                             (float)deltaTime, (float)m_damping,
                             (float)m_lambda,

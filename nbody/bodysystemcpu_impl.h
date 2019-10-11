@@ -36,8 +36,6 @@ BodySystemCPU<T>::BodySystemCPU(int numBodies)
 {
     m_pos = 0;
     m_vel = 0;
-    m_energy = 0;
-
     _initialize(numBodies);
 }
 
@@ -192,9 +190,9 @@ void bodyBodyInteraction(T accel[3], T *energy, T posMass0[4], T posMass1[4], T 
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
     T invDist = (T)1.0 / (T)sqrt((double)distSqr);
-    T invDistCube =  invDist * invDist * invDist;
     // AJM
     T invDistSquare = invDist * invDist;
+    T invDistCube =  invDistSquare * invDist;
 
     // s = m_j * invDistCube [1 FLOP]
     T s = posMass1[3] * invDistCube;
@@ -217,10 +215,9 @@ void BodySystemCPU<T>::_computeNBodyGravitation()
     #pragma omp parallel for
 #endif
 
-    m_energy = 0;
-
     for (int i = 0; i < m_numBodies; i++)
     {
+        int index = 4*i;
         int indexForce = 3*i;
 
         T acc[3] = {0, 0, 0};
@@ -245,13 +242,11 @@ void BodySystemCPU<T>::_computeNBodyGravitation()
         m_force[indexForce+1] = acc[1];
         m_force[indexForce+2] = acc[2];
 
-        // AJM
-        m_energy += energy * m_pos[4*i + 3] + m_lambda / 6 * m_pos[4*i + 3] * (m_pos[4*i + 0] * m_pos[4*i + 0] +
-        m_pos[4*i + 1] * m_pos[4*i + 1] + m_pos[4*i + 2] * m_pos[4*i + 2]);
+        // AJM - store energy of particle in w component of velocity
+        m_vel[index+3] = energy * m_pos[index+3] + m_lambda / 6 * m_pos[index + 3] * (m_pos[index + 0] * m_pos[index + 0] +
+        m_pos[index + 1] * m_pos[index + 1] + m_pos[index + 2] * m_pos[index + 2]);
 
     }
-
-    printf("Total energy: %8.4f\n", m_energy);
 
 }
 
@@ -269,8 +264,7 @@ void BodySystemCPU<T>::_integrateNBodySystem(T deltaTime)
         int index = 4*i;
         int indexForce = 3*i;
 
-
-        T pos[3], vel[3], force[3];
+        T pos[3], vel[4], force[3];
         pos[0] = m_pos[index+0];
         pos[1] = m_pos[index+1];
         pos[2] = m_pos[index+2];
@@ -312,5 +306,6 @@ void BodySystemCPU<T>::_integrateNBodySystem(T deltaTime)
         m_vel[index+0] = vel[0];
         m_vel[index+1] = vel[1];
         m_vel[index+2] = vel[2];
+
     }
 }

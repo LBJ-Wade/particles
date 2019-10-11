@@ -192,6 +192,20 @@ class NBodyDemo
         static void updateSimulation()
         {
             m_singleton->m_nbody->update(activeParams.m_timestep);
+
+            // AJM  - output energy
+
+            T *_vel = m_singleton->m_nbody->getArray(BODYSYSTEM_VELOCITY);
+            T energy = 0;
+
+           for (int i = 0; i < numBodies; i++)
+           {
+                int index = 4*i;
+                energy += _vel[index+3];
+           }
+
+           printf("Total energy: %8.4f\n", energy);
+
         }
 
         static void display()
