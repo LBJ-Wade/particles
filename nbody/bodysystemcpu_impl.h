@@ -190,9 +190,7 @@ void bodyBodyInteraction(T accel[3], T *energy, T posMass0[4], T posMass1[4], T 
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
     T invDist = (T)1.0 / (T)sqrt((double)distSqr);
-    // AJM
-    T invDistSquare = invDist * invDist;
-    T invDistCube =  invDistSquare * invDist;
+    T invDistCube =  invDist * invDist * invDist;
 
     // s = m_j * invDistCube [1 FLOP]
     T s = posMass1[3] * invDistCube;
@@ -203,7 +201,7 @@ void bodyBodyInteraction(T accel[3], T *energy, T posMass0[4], T posMass1[4], T 
     accel[2] += r[2] * s;
 
     if (valid) {
-        *energy += posMass1[3] * invDistSquare;
+        *energy += posMass1[3] * invDist;
     }
 
 }
@@ -243,7 +241,7 @@ void BodySystemCPU<T>::_computeNBodyGravitation()
         m_force[indexForce+2] = acc[2];
 
         // AJM - store energy of particle in w component of velocity
-        m_vel[index+3] = energy * m_pos[index+3] + m_lambda / 6 * m_pos[index + 3] * (m_pos[index + 0] * m_pos[index + 0] +
+        m_vel[index+3] = 0.5 * energy * m_pos[index+3] + m_lambda / 6.0 * m_pos[index + 3] * (m_pos[index + 0] * m_pos[index + 0] +
         m_pos[index + 1] * m_pos[index + 1] + m_pos[index + 2] * m_pos[index + 2]);
 
     }

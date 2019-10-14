@@ -48,22 +48,25 @@ def optimise(masses, dim, lam, num_iters=5000, lr=0.1, log_dir='', output_iter=1
         f = open(os.path.join(log_dir, 'log.txt'), 'w')
 
     min_energy = np.inf
+    positions = None
 
     for i in range(num_iters):
         scheduler.step()
         opt.zero_grad()
         dist = pairwise_forces(x, masses)[idx]
-        V = torch.sum(1 / dist) + lam / 6 * torch.sum(masses * torch.norm(x, dim=1)**2)
+        V = torch.sum(1.0 / dist) + lam / 6.0 * torch.sum(masses * torch.norm(x, dim=1)**2)
         V.backward()
         opt.step()
         energy = V.detach().cpu().numpy()
         if energy < min_energy:
             min_energy = energy
-            print(i, energy, scheduler.get_lr())
-            if log_dir:
-                f.write('%i %5.4f \n' % (i, energy))
+            positions = x.detach().cpu().numpy()
+        if i % output_iter == 0:
+            print(i, min_energy, scheduler.get_lr())
+            if log_dir and positions is not None:
+                f.write('%i %5.4f \n' % (i, min_energy))
                 f.flush()
-                np.savetxt(os.path.join(log_dir, 'positions.txt'), x.detach().cpu().numpy(), fmt='%1.4e')
+                np.savetxt(os.path.join(log_dir, 'positions.txt'), positions, fmt='%1.6e')
 
 
 if __name__ == '__main__':
@@ -73,7 +76,7 @@ if __name__ == '__main__':
     parser.add_argument('--iters', type=int, default=20000, help="Number of iters")
     parser.add_argument("--particles", type=int, default=256, help="Number of particles")
     parser.add_argument('--lam', type=float, default=3, help="Lambda")
-    parser.add_argument('--log_dir', type=str, default='logs/test')
+    parser.add_argument('--log_dir', type=str, default='output/test')
     parser.add_argument('--masses', type=str)
     parser.add_argument('--opt', type=str, default='Adam')
     parser.add_argument('--lr', type=float, default=0.1)

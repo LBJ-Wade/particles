@@ -76,6 +76,8 @@ enum { M_VIEW = 0, M_MOVE };
 
 int numBodies = 16384;
 
+double minEnergy = 1.0e100;
+
 std::string tipsyFile = "";
 
 int numIterations = 0; // run until exit
@@ -121,7 +123,7 @@ struct NBodyParams
 // AJM
 NBodyParams demoParams[] =
     {
-        { 0.01f, 1.0f, 1.0f, 0.00001f, 0.99f, 3.0f, 1.0f, 0, -2, 0},
+        { 0.05f, 1.0f, 0.0f, 0.0000001f, 0.99f, 3.0f, 1.0f, 0, -2, 0},
     };
 
 int numDemos = sizeof(demoParams) / sizeof(NBodyParams);
@@ -201,21 +203,33 @@ class NBodyDemo
             T *_vel = m_singleton->m_nbody->getArray(BODYSYSTEM_VELOCITY);
             T energy = 0;
 
-            ofstream positions;
-            positions.open("positions.dat");
-
            for (int i = 0; i < numBodies; i++)
            {
                 int index = 4*i;
                 energy += _vel[index+3];
-                positions << _pos[index+0] << "\n";
-                positions << _pos[index+1] << "\n";
-                positions << _pos[index+2] << "\n";
            }
-           
-           positions.close();
 
-           printf("Total energy: %8.4f\n", energy);
+           printf("Total energy: %10.6f\n", energy);
+           
+           if (energy < minEnergy * 0.999999) {
+
+                minEnergy = energy;
+
+                ofstream positions;
+                positions.open("output/positions.txt");
+                positions.precision(10);
+
+                for (int i = 0; i < numBodies; i++)
+                {
+                    int index = 4*i;
+                    positions << _pos[index+0] << " ";
+                    positions << _pos[index+1] << " ";
+                    positions << _pos[index+2] << "\n";
+                }
+
+                positions.close();
+
+           }
 
         }
 

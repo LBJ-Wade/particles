@@ -12,10 +12,23 @@ from scipy.special import gamma
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log_dir', type=str, default='logs/test')
+    parser.add_argument('--log_dir', type=str, default='output/test')
     args = parser.parse_args()
 
     x = np.loadtxt(os.path.join(args.log_dir, 'positions.txt'))
+
+    num_particles = x.shape[0]
+    print('Num particles: ', num_particles)
+
+    if num_particles < 1000:
+        energy = 0
+        for i in range(num_particles):
+            for j in range(0, i):
+                dist = (x[i, 0] - x[j, 0])**2 + (x[i, 1] - x[j, 1])**2 + (x[i, 2] - x[j, 2])**2
+                energy += 1.0 / dist**0.5
+            energy += 0.5 * (x[i, 0]**2 + x[i, 1]**2 + x[i, 2]**2)
+        print('Energy: ', energy)
+
     dim = x.shape[1]
     r = np.linalg.norm(x, axis=1)
 

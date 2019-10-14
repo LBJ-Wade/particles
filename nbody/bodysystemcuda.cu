@@ -131,9 +131,7 @@ bodyBodyInteraction(typename vec4<T>::Type ai,
 
     // invDistCube =1/distSqr^(3/2)  [4 FLOPS (2 mul, 1 sqrt, 1 inv)]
     T invDist = rsqrt_T(distSqr);
-    // AJM
-    T invDistSquare = invDist * invDist;
-    T invDistCube = invDistSquare * invDist;
+    T invDistCube = invDist * invDist * invDist;
 
     // s = m_j * invDistCube [1 FLOP]
     T s = bj.w * invDistCube;
@@ -145,7 +143,7 @@ bodyBodyInteraction(typename vec4<T>::Type ai,
 
     // AJM - set w component to energy
     if (valid) {
-        ai.w += bi.w * bj.w * invDistSquare;
+        ai.w += bi.w * bj.w * invDist;
     }
 
     return ai;
@@ -225,7 +223,7 @@ integrateBodies(typename vec4<T>::Type *__restrict__ newPos,
     velocity.z *= damping;
 
     // AJM - store energy of particle in w component of velocity
-    velocity.w = accel.w + lambda / 6 * position.w * (position.x * position.x + position.y * position.y + position.z * position.z);
+    velocity.w = 0.5 * accel.w + lambda / 6 * position.w * (position.x * position.x + position.y * position.y + position.z * position.z);
 
     // new position = old position + velocity * deltaTime
     position.x += velocity.x * deltaTime;
